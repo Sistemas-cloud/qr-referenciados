@@ -71,11 +71,15 @@ export default function QRReader({ onScanSuccess, onError }: QRReaderProps) {
       console.log('Cámaras disponibles:', cameras.length)
 
       // Configuraciones a intentar en orden
-      const cameraConfigs = [
-        { facingMode: 'environment' }, // Cámara trasera
-        { facingMode: 'user' }, // Cámara frontal
-        true, // Cualquier cámara disponible
+      const cameraConfigs: (string | MediaTrackConstraints)[] = [
+        { facingMode: 'environment' } as MediaTrackConstraints, // Cámara trasera
+        { facingMode: 'user' } as MediaTrackConstraints, // Cámara frontal
       ]
+
+      // Si hay cámaras disponibles, intentar usar el deviceId de la primera
+      if (cameras.length > 0 && cameras[0].deviceId) {
+        cameraConfigs.push(cameras[0].deviceId)
+      }
 
       let lastError: any = null
       

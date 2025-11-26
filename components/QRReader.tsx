@@ -24,33 +24,98 @@ export default function QRReader({ onScanSuccess, onError }: QRReaderProps) {
     }
   }, [scanning])
 
+  const checkCameraPermission = async (): Promise<boolean> => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      // Detener el stream inmediatamente, solo queríamos verificar permisos
+      stream.getTracks().forEach(track => track.stop())
+      return true
+    } catch (error: any) {
+      console.error('Error al verificar permisos de cámara:', error)
+      return false
+    }
+  }
+
   const startCameraScan = async () => {
     try {
       setError('')
       setScanMode('camera')
+
+      // Verificar si el navegador soporta getUserMedia
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Tu navegador no soporta acceso a la cámara. Por favor, usa un navegador moderno.')
+      }
+
+      // Verificar permisos antes de iniciar
+      const hasPermission = await checkCameraPermission()
+      if (!hasPermission) {
+        throw new Error('Permisos de cámara denegados. Por favor, permite el acceso a la cámara en la configuración de tu navegador.')
+      }
       
       const html5QrCode = new Html5Qrcode('reader')
       html5QrCodeRef.current = html5QrCode
 
-      await html5QrCode.start(
-        { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        (decodedText) => {
-          handleScanSuccess(decodedText)
-        },
-        (errorMessage) => {
-          // Ignorar errores de escaneo continuo
+      // Intentar con cámara trasera primero, luego cualquier cámara disponible
+      let cameraConfig = { facingMode: 'environment' }
+      
+      try {
+        await html5QrCode.start(
+          cameraConfig,
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+          },
+          (decodedText) => {
+            handleScanSuccess(decodedText)
+          },
+          (errorMessage) => {
+            // Ignorar errores de escaneo continuo
+          }
+        )
+      } catch (cameraError: any) {
+        // Si falla con cámara trasera, intentar con cualquier cámara disponible
+        if (cameraError.message?.includes('environment')) {
+          cameraConfig = { facingMode: 'user' }
+          await html5QrCode.start(
+            cameraConfig,
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+              aspectRatio: 1.0,
+            },
+            (decodedText) => {
+              handleScanSuccess(decodedText)
+            },
+            (errorMessage) => {
+              // Ignorar errores de escaneo continuo
+            }
+          )
+        } else {
+          throw cameraError
         }
-      )
+      }
 
       setScanning(true)
     } catch (err: any) {
-      setError('No se pudo acceder a la cámara. Verifica los permisos.')
+      console.error('Error al iniciar cámara:', err)
+      
+      let errorMessage = 'No se pudo acceder a la cámara.'
+      
+      if (err.name === 'NotAllowedError' || err.message?.includes('denegados') || err.message?.includes('permission')) {
+        errorMessage = 'Permisos de cámara denegados. Por favor, permite el acceso a la cámara en la configuración de tu navegador o aplicación.'
+      } else if (err.name === 'NotFoundError' || err.message?.includes('no se encontró')) {
+        errorMessage = 'No se encontró ninguna cámara en tu dispositivo.'
+      } else if (err.name === 'NotReadableError' || err.message?.includes('no se puede leer')) {
+        errorMessage = 'La cámara está siendo usada por otra aplicación. Cierra otras aplicaciones que usen la cámara e intenta nuevamente.'
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      
+      setError(errorMessage)
       setScanMode(null)
-      if (onError) onError(err.message)
+      setScanning(false)
+      if (onError) onError(errorMessage)
     }
   }
 

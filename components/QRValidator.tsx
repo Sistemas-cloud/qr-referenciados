@@ -174,69 +174,6 @@ export default function QRValidator() {
         </div>
       </div>
 
-      {/* Listado de Registros */}
-      <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-white">Registros</h2>
-          <button
-            onClick={loadRecords}
-            disabled={loadingRecords}
-            className="bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/50 text-purple-200 font-semibold py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <RefreshCw className={`w-4 h-4 ${loadingRecords ? 'animate-spin' : ''}`} />
-            <span>Actualizar</span>
-          </button>
-        </div>
-
-        {loadingRecords ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
-          </div>
-        ) : records.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
-            <p>No hay registros disponibles</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">ID</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Control</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">QR</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Fecha</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.map((record) => (
-                  <tr 
-                    key={record.id} 
-                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                  >
-                    <td className="py-3 px-4 text-white font-mono text-sm">{record.id}</td>
-                    <td className="py-3 px-4 text-white font-mono text-sm">{record.ctrl}</td>
-                    <td className="py-3 px-4 text-white font-mono text-sm">{record.qr}</td>
-                    <td className="py-3 px-4 text-gray-300 text-sm">
-                      {record.fecha ? new Date(record.fecha).toLocaleDateString('es-ES') : '-'}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        record.status === 'autorizado'
-                          ? 'bg-green-500/20 text-green-300 border border-green-500/50'
-                          : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50'
-                      }`}>
-                        {record.status || 'pendiente'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
       {result && (
         <div className={`bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border ${
           result.success 
@@ -313,6 +250,69 @@ export default function QRValidator() {
           )}
         </div>
       )}
+
+      {/* Listado de Registros */}
+      <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-white">Registros</h2>
+          <button
+            onClick={loadRecords}
+            disabled={loadingRecords}
+            className="bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/50 text-purple-200 font-semibold py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`w-4 h-4 ${loadingRecords ? 'animate-spin' : ''}`} />
+            <span>Actualizar</span>
+          </button>
+        </div>
+
+        {loadingRecords ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
+          </div>
+        ) : records.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            <p>No hay registros disponibles</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">ID</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Control</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">QR</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Fecha</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {records.map((record) => (
+                  <tr 
+                    key={record.id} 
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                  >
+                    <td className="py-3 px-4 text-white font-mono text-sm">{record.id}</td>
+                    <td className="py-3 px-4 text-white font-mono text-sm">{record.ctrl}</td>
+                    <td className="py-3 px-4 text-white font-mono text-sm">{record.qr}</td>
+                    <td className="py-3 px-4 text-gray-300 text-sm">
+                      {record.fecha ? new Date(record.fecha).toLocaleDateString('es-ES') : '-'}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        record.status === 'autorizado'
+                          ? 'bg-green-500/20 text-green-300 border border-green-500/50'
+                          : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50'
+                      }`}>
+                        {record.status || 'pendiente'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Modal de Alerta */}
       <AlertModal

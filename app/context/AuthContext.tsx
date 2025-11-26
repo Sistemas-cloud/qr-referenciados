@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 interface AuthContextType {
   isAuthenticated: boolean
+  isLoading: boolean
   login: (username: string, password: string) => Promise<boolean>
   logout: () => void
 }
@@ -12,12 +13,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Verificar si hay sesión guardada
-    const authStatus = localStorage.getItem('isAuthenticated')
-    if (authStatus === 'true') {
-      setIsAuthenticated(true)
+    // Verificar si hay sesión guardada solo en el cliente
+    if (typeof window !== 'undefined') {
+      try {
+        const authStatus = localStorage.getItem('isAuthenticated')
+        if (authStatus === 'true') {
+          setIsAuthenticated(true)
+        }
+      } catch (error) {
+        console.error('Error al leer localStorage:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    } else {
+      setIsLoading(false)
     }
   }, [])
 
@@ -48,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

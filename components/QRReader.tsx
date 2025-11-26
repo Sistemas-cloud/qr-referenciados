@@ -37,18 +37,37 @@ export default function QRReader({ onScanSuccess, onError }: QRReaderProps) {
   const startCameraScan = async () => {
     try {
       setError('')
-      setScanMode('camera')
-
+      
       // Verificar si el navegador soporta getUserMedia
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Tu navegador no soporta acceso a la cámara. Por favor, usa un navegador moderno como Chrome o Firefox.')
       }
 
-      // Esperar a que el elemento esté en el DOM
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Primero establecer el modo para que el elemento se renderice
+      setScanMode('camera')
       
-      const readerElement = document.getElementById('reader')
+      // Esperar a que React renderice el elemento en el DOM usando requestAnimationFrame
+      await new Promise(resolve => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setTimeout(resolve, 200)
+          })
+        })
+      })
+      
+      // Verificar múltiples veces que el elemento esté disponible
+      let readerElement = document.getElementById('reader')
+      let attempts = 0
+      const maxAttempts = 20
+      
+      while (!readerElement && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 50))
+        readerElement = document.getElementById('reader')
+        attempts++
+      }
+      
       if (!readerElement) {
+        setScanMode(null)
         throw new Error('Error: El elemento de lectura no está disponible. Por favor, recarga la página.')
       }
 
@@ -237,7 +256,7 @@ export default function QRReader({ onScanSuccess, onError }: QRReaderProps) {
         className="hidden"
       />
 
-      {(scanning || scanMode === 'file') && (
+      {(scanning || scanMode === 'camera' || scanMode === 'file') && (
         <div className="relative bg-black rounded-lg overflow-hidden border-2 border-purple-500">
           <div id="reader" className="w-full" style={{ minHeight: '300px' }}></div>
         </div>

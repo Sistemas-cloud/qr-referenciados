@@ -6,7 +6,15 @@ import QRValidator from '@/components/QRValidator'
 import { LogOut, Shield } from 'lucide-react'
 
 export default function Home() {
-  const { isAuthenticated, logout } = useAuth()
+  const { isAuthenticated, isLoading, logout } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-white text-xl">Cargando...</div>
+      </div>
+    )
+  }
 
   if (!isAuthenticated) {
     return <Login />

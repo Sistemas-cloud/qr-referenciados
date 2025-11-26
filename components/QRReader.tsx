@@ -24,15 +24,13 @@ export default function QRReader({ onScanSuccess, onError }: QRReaderProps) {
     }
   }, [scanning])
 
-  const checkCameraPermission = async (): Promise<boolean> => {
+  const getCameraDevices = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-      // Detener el stream inmediatamente, solo queríamos verificar permisos
-      stream.getTracks().forEach(track => track.stop())
-      return true
-    } catch (error: any) {
-      console.error('Error al verificar permisos de cámara:', error)
-      return false
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      return devices.filter(device => device.kind === 'videoinput')
+    } catch (error) {
+      console.error('Error al enumerar dispositivos:', error)
+      return []
     }
   }
 
@@ -43,45 +41,62 @@ export default function QRReader({ onScanSuccess, onError }: QRReaderProps) {
 
       // Verificar si el navegador soporta getUserMedia
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Tu navegador no soporta acceso a la cámara. Por favor, usa un navegador moderno.')
+        throw new Error('Tu navegador no soporta acceso a la cámara. Por favor, usa un navegador moderno como Chrome o Firefox.')
       }
 
-      // Verificar permisos antes de iniciar
-      const hasPermission = await checkCameraPermission()
-      if (!hasPermission) {
-        throw new Error('Permisos de cámara denegados. Por favor, permite el acceso a la cámara en la configuración de tu navegador.')
+      // Esperar a que el elemento esté en el DOM
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      const readerElement = document.getElementById('reader')
+      if (!readerElement) {
+        throw new Error('Error: El elemento de lectura no está disponible. Por favor, recarga la página.')
+      }
+
+      // Limpiar cualquier instancia previa
+      if (html5QrCodeRef.current) {
+        try {
+          await html5QrCodeRef.current.stop()
+          await html5QrCodeRef.current.clear()
+        } catch (e) {
+          // Ignorar errores al limpiar
+        }
+        html5QrCodeRef.current = null
       }
       
       const html5QrCode = new Html5Qrcode('reader')
       html5QrCodeRef.current = html5QrCode
 
-      // Intentar con cámara trasera primero, luego cualquier cámara disponible
-      let cameraConfig = { facingMode: 'environment' }
+      // Obtener lista de cámaras disponibles
+      const cameras = await getCameraDevices()
+      console.log('Cámaras disponibles:', cameras.length)
+
+      // Configuraciones a intentar en orden
+      const cameraConfigs = [
+        { facingMode: 'environment' }, // Cámara trasera
+        { facingMode: 'user' }, // Cámara frontal
+        true, // Cualquier cámara disponible
+      ]
+
+      let lastError: any = null
       
-      try {
-        await html5QrCode.start(
-          cameraConfig,
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0,
-          },
-          (decodedText) => {
-            handleScanSuccess(decodedText)
-          },
-          (errorMessage) => {
-            // Ignorar errores de escaneo continuo
-          }
-        )
-      } catch (cameraError: any) {
-        // Si falla con cámara trasera, intentar con cualquier cámara disponible
-        if (cameraError.message?.includes('environment')) {
-          cameraConfig = { facingMode: 'user' }
+      for (const config of cameraConfigs) {
+        try {
+          console.log('Intentando con configuración:', config)
+          
           await html5QrCode.start(
-            cameraConfig,
+            config,
             {
               fps: 10,
-              qrbox: { width: 250, height: 250 },
+              qrbox: function(viewfinderWidth, viewfinderHeight) {
+                // Calcular tamaño dinámico basado en el viewfinder
+                const minEdgePercentage = 0.7
+                const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight)
+                const qrboxSize = Math.floor(minEdgeSize * minEdgePercentage)
+                return {
+                  width: qrboxSize,
+                  height: qrboxSize
+                }
+              },
               aspectRatio: 1.0,
             },
             (decodedText) => {
@@ -91,25 +106,36 @@ export default function QRReader({ onScanSuccess, onError }: QRReaderProps) {
               // Ignorar errores de escaneo continuo
             }
           )
-        } else {
-          throw cameraError
+          
+          // Si llegamos aquí, la cámara se inició correctamente
+          setScanning(true)
+          return
+        } catch (cameraError: any) {
+          console.error('Error con configuración:', config, cameraError)
+          lastError = cameraError
+          // Continuar con la siguiente configuración
+          continue
         }
       }
 
-      setScanning(true)
+      // Si todas las configuraciones fallaron, lanzar el último error
+      throw lastError || new Error('No se pudo acceder a ninguna cámara')
+
     } catch (err: any) {
       console.error('Error al iniciar cámara:', err)
       
       let errorMessage = 'No se pudo acceder a la cámara.'
       
-      if (err.name === 'NotAllowedError' || err.message?.includes('denegados') || err.message?.includes('permission')) {
+      if (err.name === 'NotAllowedError' || err.message?.includes('denegados') || err.message?.includes('permission') || err.message?.includes('Permission denied')) {
         errorMessage = 'Permisos de cámara denegados. Por favor, permite el acceso a la cámara en la configuración de tu navegador o aplicación.'
-      } else if (err.name === 'NotFoundError' || err.message?.includes('no se encontró')) {
+      } else if (err.name === 'NotFoundError' || err.message?.includes('no se encontró') || err.message?.includes('not found')) {
         errorMessage = 'No se encontró ninguna cámara en tu dispositivo.'
-      } else if (err.name === 'NotReadableError' || err.message?.includes('no se puede leer')) {
+      } else if (err.name === 'NotReadableError' || err.message?.includes('no se puede leer') || err.message?.includes('not readable')) {
         errorMessage = 'La cámara está siendo usada por otra aplicación. Cierra otras aplicaciones que usen la cámara e intenta nuevamente.'
       } else if (err.message) {
-        errorMessage = err.message
+        errorMessage = `Error: ${err.message}`
+      } else if (err.toString) {
+        errorMessage = `Error: ${err.toString()}`
       }
       
       setError(errorMessage)

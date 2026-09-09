@@ -60,6 +60,10 @@ export default function Home() {
               Cerrar sesión
             </button>
           </div>
+          {/* 2026-09-09: chip para confirmar rediseño vs caché antigua */}
+          <p className="border-t border-[var(--w-stroke)] px-5 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--w-muted)] sm:px-6">
+            UI Winston · Sep 2026 · Cd. Madero
+          </p>
         </header>
 
         <main>

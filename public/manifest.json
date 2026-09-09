@@ -1,11 +1,11 @@
 {
-  "name": "Sistema de Validación QR",
-  "short_name": "QR Validator",
-  "description": "Sistema de validación y autorización de códigos QR",
+  "name": "Familia Winston · Validación QR",
+  "short_name": "Familia Winston",
+  "description": "Autorización de comprobantes Familia Winston — Instituto Winston Churchill, Ciudad Madero",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#7c3aed",
+  "background_color": "#f3f0e8",
+  "theme_color": "#013BDF",
   "orientation": "portrait",
   "icons": [
     {
@@ -13,14 +13,5 @@
       "sizes": "any",
       "type": "image/x-icon"
     }
-  ],
-  "permissions": [
-    "camera"
-  ],
-  "features": [
-    "camera"
   ]
 }
-
-
-

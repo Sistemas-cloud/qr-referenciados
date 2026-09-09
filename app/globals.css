@@ -1,26 +1,189 @@
 @import "tailwindcss";
 
+/* 2026-09-09: Identidad Instituto Winston Churchill · Ciudad Madero */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --w-navy: #0a1f4d;
+  --w-blue: #013bdf;
+  --w-blue-deep: #022a9e;
+  --w-lime: #e3fb07;
+  --w-lime-soft: #f4ff8a;
+  --w-sand: #f3f0e8;
+  --w-ink: #0f172a;
+  --w-muted: #5b6475;
+  --w-card: rgba(255, 255, 255, 0.92);
+  --w-stroke: rgba(1, 59, 223, 0.12);
+  --background: var(--w-sand);
+  --foreground: var(--w-ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-w-navy: var(--w-navy);
+  --color-w-blue: var(--w-blue);
+  --color-w-lime: var(--w-lime);
+  --color-w-sand: var(--w-sand);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+/* Atmósfera: azul institucional + textura suave (Cd. Madero) */
+.winston-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(1, 59, 223, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(227, 251, 7, 0.16), transparent 50%),
+    linear-gradient(165deg, #eef2fb 0%, var(--w-sand) 42%, #e8eefc 100%);
+}
+
+.winston-shell::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23013bdf' fill-opacity='0.035'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.9;
+}
+
+.winston-panel {
+  position: relative;
+  background: var(--w-card);
+  border: 1px solid var(--w-stroke);
+  border-radius: 1.25rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 18px 40px rgba(10, 31, 77, 0.08);
+}
+
+.winston-accent-bar {
+  height: 4px;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--w-blue), var(--w-lime) 70%, var(--w-blue-deep));
+}
+
+@keyframes winston-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes winston-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(227, 251, 7, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(227, 251, 7, 0);
+  }
+}
+
+.animate-winston-rise {
+  animation: winston-rise 0.55s ease-out both;
+}
+
+.animate-winston-rise-delay {
+  animation: winston-rise 0.65s ease-out 0.12s both;
+}
+
+.animate-winston-rise-delay-2 {
+  animation: winston-rise 0.7s ease-out 0.22s both;
+}
+
+.btn-winston-primary {
+  background: linear-gradient(135deg, var(--w-blue) 0%, var(--w-blue-deep) 100%);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 0.85rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  box-shadow: 0 10px 24px rgba(1, 59, 223, 0.28);
+}
+
+.btn-winston-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.btn-winston-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-winston-lime {
+  background: var(--w-lime);
+  color: var(--w-navy);
+  font-weight: 800;
+  border-radius: 0.85rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 20px rgba(227, 251, 7, 0.35);
+}
+
+.btn-winston-lime:hover:not(:disabled) {
+  transform: translateY(-1px);
+  animation: winston-glow 1.4s ease infinite;
+}
+
+.btn-winston-ghost {
+  background: rgba(1, 59, 223, 0.06);
+  border: 1px solid rgba(1, 59, 223, 0.18);
+  color: var(--w-blue);
+  font-weight: 700;
+  border-radius: 0.85rem;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-winston-ghost:hover:not(:disabled) {
+  background: rgba(1, 59, 223, 0.12);
+  border-color: rgba(1, 59, 223, 0.35);
+}
+
+.input-winston {
+  width: 100%;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(10, 31, 77, 0.12);
+  background: #fff;
+  padding: 0.85rem 1rem;
+  color: var(--w-ink);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-winston:focus {
+  outline: none;
+  border-color: var(--w-blue);
+  box-shadow: 0 0 0 3px rgba(1, 59, 223, 0.15);
+}
+
+.input-winston::placeholder {
+  color: #94a3b8;
+}
+
+.badge-pendiente {
+  background: rgba(234, 179, 8, 0.15);
+  color: #a16207;
+  border: 1px solid rgba(234, 179, 8, 0.35);
+}
+
+.badge-autorizado {
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }

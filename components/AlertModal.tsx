@@ -10,55 +10,54 @@ interface AlertModalProps {
   message?: string
 }
 
-export default function AlertModal({ 
-  isOpen, 
-  onClose, 
-  title = 'Autorización Exitosa',
-  message = 'La autorización se ha realizado correctamente'
+// 2026-09-09: Modal de éxito con identidad Winston.
+export default function AlertModal({
+  isOpen,
+  onClose,
+  title = 'Comprobante autorizado',
+  message = 'El registro Familia Winston quedó marcado como autorizado.',
 }: AlertModalProps) {
   useEffect(() => {
-    if (isOpen) {
-      // Cerrar automáticamente después de 3 segundos
-      const timer = setTimeout(() => {
-        onClose()
-      }, 3000)
-
-      return () => clearTimeout(timer)
-    }
+    if (!isOpen) return
+    const timer = setTimeout(onClose, 3200)
+    return () => clearTimeout(timer)
   }, [isOpen, onClose])
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-green-500/50 p-6 max-w-md w-full mx-4 animate-in fade-in zoom-in duration-200">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full shadow-lg">
-              <CheckCircle className="w-6 h-6 text-white" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--w-navy)]/45 px-4 backdrop-blur-sm">
+      <div className="winston-panel w-full max-w-md overflow-hidden animate-winston-rise">
+        <div className="winston-accent-bar" />
+        <div className="p-6">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--w-lime)] text-[var(--w-navy)] shadow-md">
+                <CheckCircle className="h-6 w-6" />
+              </div>
+              <h3 className="font-display text-xl text-[var(--w-navy)]">{title}</h3>
             </div>
-            <h3 className="text-xl font-bold text-white">{title}</h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-1 text-[var(--w-muted)] transition hover:bg-[var(--w-sand)] hover:text-[var(--w-navy)]"
+              aria-label="Cerrar"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
+
+          <p className="mb-5 text-sm text-[var(--w-muted)]">{message}</p>
+
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="btn-winston-primary w-full py-3"
           >
-            <X className="w-5 h-5" />
+            Aceptar
           </button>
         </div>
-        
-        <p className="text-gray-300 mb-4">{message}</p>
-        
-        <button
-          onClick={onClose}
-          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200"
-        >
-          Aceptar
-        </button>
       </div>
     </div>
   )
 }
-
-
-

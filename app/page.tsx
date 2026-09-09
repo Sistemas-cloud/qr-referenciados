@@ -3,15 +3,19 @@
 import { useAuth } from './context/AuthContext'
 import Login from '@/components/Login'
 import QRValidator from '@/components/QRValidator'
-import { LogOut, Shield } from 'lucide-react'
+import { LogOut, QrCode, MapPin } from 'lucide-react'
 
+// 2026-09-09: Shell autenticado con marca Winston / Cd. Madero.
 export default function Home() {
   const { isAuthenticated, isLoading, logout } = useAuth()
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="text-white text-xl">Cargando...</div>
+      <div className="winston-shell flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[var(--w-blue)] border-t-transparent" />
+          <p className="font-display text-lg text-[var(--w-navy)]">Cargando…</p>
+        </div>
       </div>
     )
   }
@@ -21,38 +25,66 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <header className="mb-8">
-          <div className="flex items-center justify-between bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6">
-            <div className="flex items-center gap-4">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg">
-                <Shield className="w-6 h-6 text-white" />
+    <div className="winston-shell">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+        <header className="winston-panel mb-6 overflow-hidden animate-winston-rise">
+          <div className="winston-accent-bar" />
+          <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--w-blue)] text-[var(--w-lime)] shadow-lg shadow-[rgba(1,59,223,0.35)]">
+                <QrCode className="h-7 w-7" strokeWidth={2.25} />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Sistema de Validación QR</h1>
-                <p className="text-gray-300 text-sm">Verificación y autorización de códigos</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--w-blue)]">
+                  Familia Winston
+                </p>
+                <h1 className="font-display text-2xl text-[var(--w-navy)] sm:text-3xl">
+                  Validación de comprobantes
+                </h1>
+                <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[var(--w-muted)]">
+                  <span>Instituto Winston Churchill</span>
+                  <span className="hidden text-[var(--w-blue)]/30 sm:inline">·</span>
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5 text-[var(--w-blue)]" />
+                    Ciudad Madero, Tam.
+                  </span>
+                </p>
               </div>
             </div>
             <button
+              type="button"
               onClick={logout}
-              className="bg-red-600/20 hover:bg-red-600/30 border border-red-500/50 text-red-200 font-semibold py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2"
+              className="btn-winston-ghost inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm"
             >
-              <LogOut className="w-5 h-5" />
-              <span>Cerrar Sesión</span>
+              <LogOut className="h-4 w-4" />
+              Cerrar sesión
             </button>
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="max-w-4xl mx-auto">
+        <main>
           <QRValidator />
         </main>
 
-        {/* Footer */}
-        <footer className="mt-12 text-center text-gray-400 text-sm">
-          <p>Sistema de Validación QR © 2025</p>
+        <footer className="mt-10 border-t border-[var(--w-stroke)] pt-6 text-center text-sm text-[var(--w-muted)] animate-winston-rise-delay-2">
+          <p className="font-semibold text-[var(--w-navy)]">
+            Instituto Winston Churchill
+          </p>
+          <p className="mt-1">
+            Ciudad Madero ·{' '}
+            <a
+              href="https://winston93.edu.mx"
+              className="text-[var(--w-blue)] underline-offset-2 hover:underline"
+              target="_blank"
+              rel="noreferrer"
+            >
+              winston93.edu.mx
+            </a>{' '}
+            · 833 437 87 43
+          </p>
+          <p className="mt-2 text-xs uppercase tracking-[0.18em] text-[var(--w-muted)]/80">
+            Programa Familia Winston · Sistema QR
+          </p>
         </footer>
       </div>
     </div>

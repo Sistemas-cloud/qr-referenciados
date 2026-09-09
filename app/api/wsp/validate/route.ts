@@ -1,38 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { getWspDb } from '@/lib/insforge'
 
+// 2026-09-09: Valida ctrl+qr contra wsp en InsForge.
 export async function POST(request: NextRequest) {
   try {
     const { ctrl, qr } = await request.json()
 
-    if (!ctrl || !qr) {
+    if (!ctrl || qr === undefined || qr === null || qr === '') {
       return NextResponse.json(
         { success: false, error: 'Número de control y QR son requeridos' },
         { status: 400 }
       )
     }
 
-    // Buscar registro que coincida con ctrl y qr
-    const { data, error } = await supabase
+    const db = getWspDb()
+    const { data, error } = await db
       .from('wsp')
       .select('*')
-      .eq('ctrl', parseInt(ctrl))
-      .eq('qr', parseInt(qr))
+      .eq('ctrl', parseInt(String(ctrl), 10))
+      .eq('qr', parseInt(String(qr), 10))
       .single()
 
     if (error || !data) {
       return NextResponse.json(
-        { success: false, error: 'No se encontró un registro que coincida con el número de control y QR' },
+        {
+          success: false,
+          error:
+            'No se encontró un registro que coincida con el número de control y QR',
+        },
         { status: 404 }
       )
     }
 
     return NextResponse.json({ success: true, data }, { status: 200 })
   } catch (error) {
+    console.error('wsp/validate fatal:', error)
     return NextResponse.json(
-      { success: false, error: 'Error en el servidor' },
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error en el servidor',
+      },
       { status: 500 }
     )
   }
 }
-

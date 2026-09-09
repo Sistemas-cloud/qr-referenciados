@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import QRReader from './QRReader'
 import AlertModal from './AlertModal'
 import { CheckCircle, XCircle, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
-import { WspRecord } from '@/lib/supabase'
+import { WspRecord } from '@/lib/insforge'
 
 interface ValidationResult {
   success: boolean

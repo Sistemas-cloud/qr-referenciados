@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getWspDb } from '@/lib/insforge'
+import { cargarAlumnoPorCtrl } from '@/lib/alumnoInfo'
 
-// 2026-09-09: Valida ctrl+qr contra wsp en InsForge.
-export async function POST(request: NextRequest) {
+// 2026-09-09: Valida ctrl+qr; enriquece con ficha alumno (solo lectura, no toca servicios-admin).
+export async function POST(request: Request) {
   try {
     const { ctrl, qr } = await request.json()
 
@@ -13,12 +14,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const ctrlNum = parseInt(String(ctrl), 10)
+    const qrNum = parseInt(String(qr), 10)
+
     const db = getWspDb()
     const { data, error } = await db
       .from('wsp')
       .select('*')
-      .eq('ctrl', parseInt(String(ctrl), 10))
-      .eq('qr', parseInt(String(qr), 10))
+      .eq('ctrl', ctrlNum)
+      .eq('qr', qrNum)
       .single()
 
     if (error || !data) {
@@ -32,7 +36,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ success: true, data }, { status: 200 })
+    // Solo SELECT a alumno; si falla, la validación wsp igual es válida.
+    const alumno = await cargarAlumnoPorCtrl(ctrlNum)
+
+    return NextResponse.json(
+      { success: true, data, alumno },
+      { status: 200 }
+    )
   } catch (error) {
     console.error('wsp/validate fatal:', error)
     return NextResponse.json(

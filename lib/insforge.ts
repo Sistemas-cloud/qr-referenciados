@@ -33,4 +33,8 @@ export interface WspRecord {
   estatus: string
   qr: number
   status?: string
+  /** 2026-09-09: enriquecido en /api/wsp/list (solo lectura alumno). */
+  alumnoNombre?: string | null
+  alumnoNivel?: string | null
 }
+

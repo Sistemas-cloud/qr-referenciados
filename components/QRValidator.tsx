@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react'
 import QRReader from './QRReader'
 import AlertModal from './AlertModal'
-import { CheckCircle, XCircle, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, RefreshCw } from 'lucide-react'
 import { WspRecord } from '@/lib/insforge'
+import type { AlumnoResumen } from '@/lib/alumnoInfo'
 
 interface ValidationResult {
   success: boolean
-  data?: any
+  data?: WspRecord
+  alumno?: AlumnoResumen | null
   error?: string
 }
 
@@ -22,7 +24,6 @@ export default function QRValidator() {
   const [loadingRecords, setLoadingRecords] = useState(false)
   const [showModal, setShowModal] = useState(false)
 
-  // Cargar registros al montar el componente
   useEffect(() => {
     loadRecords()
   }, [])
@@ -51,7 +52,7 @@ export default function QRValidator() {
     if (!ctrl || !qrCode) {
       setResult({
         success: false,
-        error: 'Por favor ingresa el número de control y escanea el código QR'
+        error: 'Por favor ingresa el número de control y escanea el código QR',
       })
       return
     }
@@ -63,15 +64,18 @@ export default function QRValidator() {
       const response = await fetch('/api/wsp/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ctrl: parseInt(ctrl), qr: parseInt(qrCode) }),
+        body: JSON.stringify({
+          ctrl: parseInt(ctrl, 10),
+          qr: parseInt(qrCode, 10),
+        }),
       })
 
       const data = await response.json()
       setResult(data)
-    } catch (error) {
+    } catch {
       setResult({
         success: false,
-        error: 'Error al validar. Intenta nuevamente.'
+        error: 'Error al validar. Intenta nuevamente.',
       })
     } finally {
       setValidating(false)
@@ -91,29 +95,27 @@ export default function QRValidator() {
       })
 
       const data = await response.json()
-      
+
       if (data.success) {
         setResult({
           success: true,
-          data: { ...result.data, status: 'autorizado' }
+          data: { ...result.data, status: 'autorizado' },
+          alumno: result.alumno,
         })
-        // Mostrar modal de éxito
         setShowModal(true)
-        // Recargar listado de registros
         loadRecords()
-        // Limpiar campos
         setCtrl('')
         setQrCode('')
       } else {
         setResult({
           success: false,
-          error: data.error || 'Error al actualizar el registro'
+          error: data.error || 'Error al actualizar el registro',
         })
       }
-    } catch (error) {
+    } catch {
       setResult({
         success: false,
-        error: 'Error al autorizar. Intenta nuevamente.'
+        error: 'Error al autorizar. Intenta nuevamente.',
       })
     } finally {
       setUpdating(false)
@@ -123,8 +125,10 @@ export default function QRValidator() {
   return (
     <div className="space-y-6">
       <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6">
-        <h2 className="text-2xl font-bold text-white mb-6">Validación de Código QR</h2>
-        
+        <h2 className="text-2xl font-bold text-white mb-6">
+          Validación de Código QR
+        </h2>
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -155,6 +159,7 @@ export default function QRValidator() {
           </div>
 
           <button
+            type="button"
             onClick={handleValidate}
             disabled={validating || !ctrl || !qrCode}
             className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
@@ -175,21 +180,70 @@ export default function QRValidator() {
       </div>
 
       {result && (
-        <div className={`bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border ${
-          result.success 
-            ? 'border-green-500/50' 
-            : 'border-red-500/50'
-        } p-6`}>
-          {result.success ? (
+        <div
+          className={`bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border ${
+            result.success ? 'border-green-500/50' : 'border-red-500/50'
+          } p-6`}
+        >
+          {result.success && result.data ? (
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-green-200">
                 <CheckCircle className="w-6 h-6" />
                 <h3 className="text-xl font-bold">Validación Exitosa</h3>
               </div>
-              
+
+              {/* 2026-09-09: Ficha alumno desde InsForge (solo lectura). */}
+              {result.alumno ? (
+                <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4 space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-blue-300">
+                    Alumno Winston (servicios)
+                  </p>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-gray-300">Nombre:</span>
+                    <span className="text-white font-semibold text-right">
+                      {result.alumno.nombreCompleto}
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-gray-300">Nivel:</span>
+                    <span className="text-white">
+                      {result.alumno.nivelEtiqueta}
+                      {result.alumno.grado
+                        ? ` · ${result.alumno.grado}${result.alumno.grupo ? result.alumno.grupo : ''}`
+                        : ''}
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-gray-300">Estatus alumno:</span>
+                    <span className="text-white">{result.alumno.statusEtiqueta}</span>
+                  </div>
+                  {result.alumno.cicloEscolar != null && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-gray-300">Ciclo:</span>
+                      <span className="text-white font-mono">
+                        {result.alumno.cicloEscolar}
+                      </span>
+                    </div>
+                  )}
+                  {result.alumno.nuevoIngreso != null && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-gray-300">Nuevo ingreso:</span>
+                      <span className="text-white">
+                        {result.alumno.nuevoIngreso ? 'Sí' : 'No'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-200 px-4 py-3 rounded-lg text-sm">
+                  No se encontró ficha de alumno con control {result.data.ctrl}{' '}
+                  en la BD (el QR sí es válido en wsp).
+                </div>
+              )}
+
               <div className="bg-white/5 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-300">ID:</span>
+                  <span className="text-gray-300">ID wsp:</span>
                   <span className="text-white font-mono">{result.data.id}</span>
                 </div>
                 <div className="flex justify-between">
@@ -201,12 +255,14 @@ export default function QRValidator() {
                   <span className="text-white font-mono">{result.data.qr}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-300">Estado Actual:</span>
-                  <span className={`font-semibold ${
-                    result.data.status === 'autorizado' 
-                      ? 'text-green-400' 
-                      : 'text-yellow-400'
-                  }`}>
+                  <span className="text-gray-300">Estado QR:</span>
+                  <span
+                    className={`font-semibold ${
+                      result.data.status === 'autorizado'
+                        ? 'text-green-400'
+                        : 'text-yellow-400'
+                    }`}
+                  >
                     {result.data.status || 'pendiente'}
                   </span>
                 </div>
@@ -214,6 +270,7 @@ export default function QRValidator() {
 
               {result.data.status !== 'autorizado' && (
                 <button
+                  type="button"
                   onClick={handleAuthorize}
                   disabled={updating}
                   className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
@@ -251,16 +308,18 @@ export default function QRValidator() {
         </div>
       )}
 
-      {/* Listado de Registros */}
       <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-white">Registros</h2>
           <button
+            type="button"
             onClick={loadRecords}
             disabled={loadingRecords}
             className="bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/50 text-purple-200 font-semibold py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RefreshCw className={`w-4 h-4 ${loadingRecords ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${loadingRecords ? 'animate-spin' : ''}`}
+            />
             <span>Actualizar</span>
           </button>
         </div>
@@ -278,31 +337,62 @@ export default function QRValidator() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/10">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">ID</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Control</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">QR</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Fecha</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">Estado</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                    ID
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                    Control
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                    Alumno
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                    QR
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                    Fecha
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-300">
+                    Estado
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {records.map((record) => (
-                  <tr 
-                    key={record.id} 
+                  <tr
+                    key={record.id}
                     className="border-b border-white/5 hover:bg-white/5 transition-colors"
                   >
-                    <td className="py-3 px-4 text-white font-mono text-sm">{record.id}</td>
-                    <td className="py-3 px-4 text-white font-mono text-sm">{record.ctrl}</td>
-                    <td className="py-3 px-4 text-white font-mono text-sm">{record.qr}</td>
+                    <td className="py-3 px-4 text-white font-mono text-sm">
+                      {record.id}
+                    </td>
+                    <td className="py-3 px-4 text-white font-mono text-sm">
+                      {record.ctrl}
+                    </td>
+                    <td className="py-3 px-4 text-gray-200 text-sm">
+                      {record.alumnoNombre || '—'}
+                      {record.alumnoNivel ? (
+                        <span className="block text-xs text-gray-400">
+                          {record.alumnoNivel}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="py-3 px-4 text-white font-mono text-sm">
+                      {record.qr}
+                    </td>
                     <td className="py-3 px-4 text-gray-300 text-sm">
-                      {record.fecha ? new Date(record.fecha).toLocaleDateString('es-ES') : '-'}
+                      {record.fecha
+                        ? new Date(record.fecha).toLocaleDateString('es-ES')
+                        : '-'}
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        record.status === 'autorizado'
-                          ? 'bg-green-500/20 text-green-300 border border-green-500/50'
-                          : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50'
-                      }`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          record.status === 'autorizado'
+                            ? 'bg-green-500/20 text-green-300 border border-green-500/50'
+                            : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50'
+                        }`}
+                      >
                         {record.status || 'pendiente'}
                       </span>
                     </td>
@@ -314,12 +404,7 @@ export default function QRValidator() {
         )}
       </div>
 
-      {/* Modal de Alerta */}
-      <AlertModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-      />
+      <AlertModal isOpen={showModal} onClose={() => setShowModal(false)} />
     </div>
   )
 }
-
